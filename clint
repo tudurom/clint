@@ -1,0 +1,23 @@
+#! /bin/bash
+
+usage() {
+  echo "Usage: clint new <note title>"
+}
+
+newnote() {
+  [[ ! -d ".git" ]] && git init
+  filename="$(echo -n $1 | tr ' ' '-').md"
+  $VISUAL "$filename" && git add "$filename" && git commit -m "$filename"
+}
+
+if [[ $# -lt 2 ]]; then
+  usage
+  exit 1
+fi
+
+if [[ $1 -ne "new" ]]; then
+  usage
+  exit 1
+fi
+
+newnote "${@:2}"
