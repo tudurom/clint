@@ -1,7 +1,7 @@
 CLInt
 =====
 
-CLI NoTes program
+CLI Note-Taking program
 -----------------
 
 clint stores all the notes in a local git repo. This has multiple advantages, including:
