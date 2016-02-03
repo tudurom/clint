@@ -5,9 +5,9 @@ usage() {
 }
 
 newnote() {
-  [[ ! -d ".git" ]] && git init
+  [[ ! -d ".git" ]] && git init # Create git repo if it does not exist
   filename="$(echo -n $1 | tr ' ' '-').md"
-  $VISUAL "$filename" && git add "$filename" && git commit -m "$filename"
+  $VISUAL "$filename" && git add "$filename" && git commit -m "$filename" # Edit, save, commit
 }
 
 if [[ $# -lt 2 ]]; then
