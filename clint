@@ -28,6 +28,8 @@ usage() {
   echo "Where \"command\" can be:"
   echo "  new <title> - Creates or modifies a note"
   echo "  log         - Display git log"
+  echo "preview       - Preview the resulted html file in your favorite browser. Requires markdown, xdg-open and a browser."
+  echo "preview-cli   - Preview the resulted html file in the terminal. Requires markdown and lynx."
 }
 # }}}
 
@@ -39,16 +41,66 @@ install() {
 }
 # }}}
 
+# Helpers {{{
+
+# Return 0 if the specified command is available
+isavailable() {
+  command -v "$@" > /dev/null
+  return "$?"
+}
+
+filename() {
+  echo "$(echo -n $@ | tr ' ' '-')"
+}
+
+title_to_filename() {
+  echo "$(filename $@).md"
+}
+
+print_color() {
+  echo "$(tput setaf $1)${@:2}$(tput sgr0)"
+}
+
+# }}}
+
+# Features {{{
 # Create note {{{
 newnote() {
-  filename="$(echo -n $1 | tr ' ' '-').md"
+  filename=$(title_to_filename "$1")
   [[ ! -d "$notes_dir/.git" ]] && git init "$notes_dir" # Create git repo if it does not exist
   message="Created"
   [[ -f "$notes_dir/$filename" ]] && message="Modified"
   cd "$notes_dir"
-  $VISUAL "$notes_dir/$filename" && git add "$notes_dir/$filename" && git commit -m "$1" # Edit, save, commit
+  $VISUAL "$notes_dir/$filename" && git add "$notes_dir/$filename" && git commit -m "$message: $1" # Edit, save, commit
     echo "$message note at \"$notes_dir/$filename\""
 }
+# }}}
+
+#Preview note {{{
+
+preview() {
+  if isavailable markdown && isavailable xdg-open; then
+    filename="$(filename $1)"
+    [[ ! -f "${filename}.md" ]] && fail 'Note not found'
+    markdown "${filename}.md" > "/tmp/clint-${filename}.html"
+    xdg-open "/tmp/clint-${filename}.html" &> /dev/null
+    rm "/tmp/clint-${filename}.html"
+  else
+    fail 'It seems markdown and/or xdg-open are missing from your system. Install them and try again'
+  fi
+}
+
+preview_cli() {
+  if isavailable markdown && isavailable lynx; then
+    [[ ! -f "$(title_to_filename $1)" ]] && fail 'Note not found'
+    markdown "$(title_to_filename $1)" | lynx -stdin
+  else
+    fail 'It seems markdown and/or lynx are missing from your system. Install them and try again.'
+  fi
+}
+
+# }}}
+
 # }}}
 
 # Load config {{{
@@ -63,23 +115,36 @@ fi
 # }}}
 
 fail() {
+  [[ $# -gt 0 ]] && echo "$(print_color 1 $1)"
   usage
   exit 1
 }
 
 [[ $# -eq 0 ]] && fail
 
+args="${@:2}"
+
 case $1 in
+  usage)
+    usage
+    ;;
   new)
-    [[ $# -eq 1 ]] && fail
-    newnote "${@:2}"
+    [[ $# -eq 1 ]] && fail 'Note title is required'
+    newnote "$args"
     ;;
   log)
     cd "$notes_dir"
     git log
     ;;
+  preview)
+    [[ $# -eq 1 ]] && fail 'Note title required'
+    preview "$args"
+    ;;
+  preview-cli)
+    [[ $# -eq 1 ]] && fail "Note title is required"
+    preview_cli "$args"
+    ;;
   *)
-    usage
-    exit 1
+    fail
     ;;
 esac
