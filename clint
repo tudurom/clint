@@ -81,8 +81,8 @@ newnote() {
 preview() {
   if isavailable markdown && isavailable xdg-open; then
     filename="$(filename $1)"
-    [[ ! -f "${filename}.md" ]] && fail 'Note not found'
-    markdown "${filename}.md" > "/tmp/clint-${filename}.html"
+    [[ ! -f "${notes_dir}/${filename}.md" ]] && fail 'Note not found'
+    markdown "${notes_dir}/${filename}.md" > "/tmp/clint-${filename}.html"
     xdg-open "/tmp/clint-${filename}.html" &> /dev/null
     rm "/tmp/clint-${filename}.html"
   else
@@ -92,8 +92,8 @@ preview() {
 
 preview_cli() {
   if isavailable markdown && isavailable lynx; then
-    [[ ! -f "$(title_to_filename $1)" ]] && fail 'Note not found'
-    markdown "$(title_to_filename $1)" | lynx -stdin
+    [[ ! -f "${notes_dir}/$(title_to_filename $1)" ]] && fail 'Note not found'
+    markdown "${notes_dir}/$(title_to_filename $1)" | lynx -stdin
   else
     fail 'It seems markdown and/or lynx are missing from your system. Install them and try again.'
   fi
